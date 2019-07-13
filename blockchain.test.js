@@ -2,10 +2,12 @@ const Blockchain = require('./Blockchain');
 const Block = require('./block');
 
 describe('BlockChain',()=>{
-    let blockchain ;
+    let blockchain,newChain,originalChain ;
     
     beforeEach(()=>{
         blockchain = new Blockchain();
+        newChain = new Blockchain();
+        originalChain = blockchain.chain;
     });
 
     it('contains a Array of chain',()=>{
@@ -69,6 +71,75 @@ describe('BlockChain',()=>{
                    });
             });
 
+    });
+
+    describe('replaceChain()',()=>{
+
+        let errorMock,logMock;
+
+        beforeEach(()=>{
+                errorMock = jest.fn();
+                logMock = jest.fn();
+                global.console.log = logMock;
+                global.console.error = errorMock; 
+        });
+    
+            describe('when the new chain is not longer',()=>{
+
+                    beforeEach(()=>{
+                        newChain.chain[0] = {new:'chain'};
+                        blockchain.replaceChain(newChain.chain);
+                    
+                    });
+                    it('does not replace chain',()=>{
+                            expect(blockchain.chain).toEqual(originalChain);
+
+                    });
+                    it('logs an error',()=>{
+                           expect(errorMock).toHaveBeenCalled(); 
+                    });
+            });
+
+            describe('when the chain is longer',()=>{
+
+                beforeEach(()=>{
+                    newChain.addBlock({data:'beers'});
+                    newChain.addBlock({data:'bets'});
+                    newChain.addBlock({data:'brats'});
+                });
+
+                describe('when the chain is not valid',()=>{
+
+                    beforeEach(()=>{
+                        newChain.chain[2].hash = 'fake-hash';    
+                        blockchain.replaceChain(newChain.chain);
+                    });
+                    it('does not replace chain',()=>{
+
+                      
+                        expect(blockchain.chain).toEqual(originalChain);
+
+                    });
+                    it('logs an error',()=>{
+                        expect(errorMock).toHaveBeenCalled(); 
+                 });
+                });
+
+                describe('when the chain is valid',()=>{
+
+                    beforeEach(()=>{
+                        blockchain.replaceChain(newChain.chain);
+
+                    });
+                    it('does repalce the chain',()=>{
+                        expect(blockchain.chain).toEqual(newChain.chain);
+
+                    });
+                    it('logs',()=>{
+                        expect(logMock).toHaveBeenCalled(); 
+                 });
+                });
+            });
     });
 
 

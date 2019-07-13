@@ -14,6 +14,19 @@ class Blockchain{
             this.chain.push(newBlock);
         }
 
+        replaceChain(chain){
+                if(chain.length <= this.length){
+                    console.error('new chain length must be greater then current length of chain');
+                        return;
+                }
+                if(!Blockchain.isValidChain(chain)){
+                    console.error('new chain must be a valid chain');
+                    return;
+                }
+                console.log('chain is replace with',chain);
+                this.chain = chain;
+        }
+        
         static isValidChain(chain){
             if(JSON.stringify(chain[0]) !== JSON.stringify(Block.genesis())){
                 return false;
@@ -21,14 +34,14 @@ class Blockchain{
 
             for(let i=1;i<chain.length;i++){
                 const Block = chain[i];
-                const {timestamp,lastHash,hash,data} = Block;
+                const {timestamp,lastHash,hash,data,nonce,difficulty} = Block;
                 const ActualLasthash = chain[i-1].hash;
 
                 if(ActualLasthash !== lastHash){
                         return false;
                 }
 
-                const validateHash = cryptoHash(timestamp,lastHash,data);
+                const validateHash = cryptoHash(timestamp,lastHash,data,nonce,difficulty);
 
                 if(hash !== validateHash){
                         return false;
