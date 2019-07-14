@@ -1,7 +1,7 @@
 const INITIAL_DIFFICULTY = 3;
 const MINE_RATE = 1000;
 const GENISIS_DATA = {
-    timestamp : 1,
+    timestamp : 1000,
     lastHash : '______',
     hash: 'hash-one',
     difficulty : INITIAL_DIFFICULTY,

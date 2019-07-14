@@ -2,12 +2,15 @@
 const Block = require('./block');
 const {GENESIS_DATA,MINE_RATE} = require('./config'); 
 const cryptoHash = require('./crypto-hash');
+const hexToBinary = require('hex-to-binary');
+
+
 describe('Block', ()=>{
 const timestamp =1000;
 const lastHash = 'foo-hash';
 const hash = 'bar-hash';
-const nonce = 1;
-const difficulty = 1;
+const nonce = 0;
+const difficulty = 3;
 const data = ['blockchain','data'];
 
 const block = new Block({
@@ -70,6 +73,13 @@ it('has timestamp, hash, last hash and data property.',() => {
                   
                     expect(minedBlock.hash.substring(0,minedBlock.difficulty)).toEqual('0'.repeat(minedBlock.difficulty));
                 });
+
+                it('adjust the difficulty',()=>{
+                    const possibleResults = [lastBlock.difficulty+1,lastBlock.difficulty-1];
+                    expect(possibleResults.includes(minedBlock.difficulty)).toBe(true);
+                });
+
+
     });
 
     describe('adjustMineRate()',()=>{
@@ -91,6 +101,11 @@ it('has timestamp, hash, last hash and data property.',() => {
         })).toEqual(block.difficulty-1);
     });
     
+    it('has the lower limit ',()=>{
+        block.difficulty = -1;
+        expect(Block.adjustDifficulty({originalBlock:block})).toEqual(1);
+
+    });
 });
 
 
