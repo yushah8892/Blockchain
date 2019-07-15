@@ -38,9 +38,9 @@ class Block{
             do{
                 nonce++;
                 timestamp = Date.now();
-                hash =cryptoHash(timestamp,lastHash,data,nonce,difficulty) 
                 difficulty = this.adjustDifficulty({originalBlock:lastBlock,timestamp:timestamp});
-            }while(hash.substring(0,difficulty) !== '0'.repeat(difficulty));
+                hash =cryptoHash(timestamp,lastHash,data,nonce,difficulty) ;
+            }while(hexToBinary(hash).substring(0,difficulty) !== '0'.repeat(difficulty));
             return new  Block({
                 timestamp ,
                 lastHash,

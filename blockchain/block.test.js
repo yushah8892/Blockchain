@@ -48,7 +48,7 @@ it('has timestamp, hash, last hash and data property.',() => {
 
     describe('minedBlock()',() => {
                 const lastBlock = Block.genesis();
-                const data = 'minded data';
+                const data = 'minded-data';
                 const minedBlock =  Block.mineBlock({lastBlock,data});
 
                 it('is Block',() =>{
@@ -66,12 +66,12 @@ it('has timestamp, hash, last hash and data property.',() => {
                 });
 
                 it('creates a SHA-256 `hash` based on proper inputs',()=>{
-                    expect(minedBlock.hash).toEqual(cryptoHash(minedBlock.timestamp,minedBlock.nonce,minedBlock.difficulty,lastBlock.hash,data));;
+                    expect(minedBlock.hash).toEqual(cryptoHash(minedBlock.timestamp,lastBlock.hash,data,minedBlock.nonce,minedBlock.difficulty));;
                 });
 
                 it('meets the difficulty criteria',()=>{
                   
-                    expect(minedBlock.hash.substring(0,minedBlock.difficulty)).toEqual('0'.repeat(minedBlock.difficulty));
+                    expect(hexToBinary(minedBlock.hash).substring(0,minedBlock.difficulty)).toEqual('0'.repeat(minedBlock.difficulty));
                 });
 
                 it('adjust the difficulty',()=>{
@@ -84,7 +84,6 @@ it('has timestamp, hash, last hash and data property.',() => {
 
     describe('adjustMineRate()',()=>{
 
-        console.log(block);
 
         it('raised the difficulty if blocks are mined fastly',()=>{
             expect(Block.adjustDifficulty({

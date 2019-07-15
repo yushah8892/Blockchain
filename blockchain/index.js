@@ -15,7 +15,7 @@ class Blockchain{
         }
 
         replaceChain(chain){
-                if(chain.length <= this.length){
+                if(chain.length < this.chain.length){
                     console.error('new chain length must be greater then current length of chain');
                         return;
                 }
@@ -38,12 +38,14 @@ class Blockchain{
                 const ActualLasthash = chain[i-1].hash;
 
                 if(ActualLasthash !== lastHash){
+                    console.log('hash is not valid');
                         return false;
                 }
 
                 const validateHash = cryptoHash(timestamp,lastHash,data,nonce,difficulty);
 
                 if(hash !== validateHash){
+                    console.log('current hash is not valid');
                         return false;
                 }
             }
