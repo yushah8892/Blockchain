@@ -5,13 +5,14 @@ const bodyParser = require('body-parser');
 const PubSub = require('./app/pubsub');
 const TransactionPool = require('./wallet/transaction-pool');
 const Wallet = require('./wallet');
-
+const TransactionMiner = require('./app/transaction-miner');
 const app = new express();
-const blockChain = new BlockChain();
+const blockchain = new BlockChain();
 const transactionPool = new TransactionPool();
-const pubsub = new PubSub({blockChain, transactionPool});
+const pubsub = new PubSub({blockchain, transactionPool});
 
 const wallet = new Wallet();
+const transactionMiner = new TransactionMiner({blockchain,transactionPool,wallet,pubsub});
 const DEFAULT_PORT = 3000;
 
 const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
@@ -19,7 +20,7 @@ const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
 
 app.use(bodyParser.json());
 app.get('/api/blocks',(req,res)=>{
-    res.json(blockChain.chain);
+    res.json(blockchain.chain);
 });
 
 
@@ -38,7 +39,7 @@ app.post('/api/transact',(req,res)=>{
         if(transaction){
             transaction.update({senderWallet:wallet,recipient,amount});
         }else{
-            transaction = wallet.createTransaction({recipient,amount});
+            transaction = wallet.createTransaction({recipient,amount,chain:blockchain.chain});
         }
     }catch(error){
             return res.status(400).json({type:'error',message:error.message});
@@ -53,6 +54,17 @@ app.get('/api/transaction-pool',(req,res)=>{
     res.json(transactionPool.transactionMap);
 });
 
+app.get('/api/mine-transactions',(req,res)=>{
+    transactionMiner.mineTransaction();
+    res.redirect('/api/blocks');
+});
+
+app.get('/api/wallet-info',(req,res)=>{
+    const address = wallet.publicKey;
+    res.json({address,
+        balance : Wallet.calculateBalance({chain:blockchain.chain,address})
+    });
+});
 let PEER_PORT;
 
 if(process.env.GENERATE_PEER_PORT === 'true'){
@@ -67,7 +79,7 @@ const syncWithRootState = ()=>{
         if(!error && response.statusCode ===200){
                 const rootChain = JSON.parse(body);
                 console.log('replace chain on a sync with',rootChain);  
-                blockChain.replaceChain(rootChain);
+                blockchain.replaceChain(rootChain);
         }
 });
 

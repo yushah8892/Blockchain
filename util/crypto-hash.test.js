@@ -12,7 +12,6 @@ describe('cryptoHash()',()=>{
 
     it('produces a uique hash when the properties have changed on an input',()=>{
         const foo = {};
-        console.log('calling foo cryptoshah');
         const originalHash = cryptoHash(foo);
         foo['a'] = 'a';
         expect(cryptoHash(foo)).not.toEqual(originalHash);

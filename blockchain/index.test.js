@@ -1,5 +1,7 @@
 const Blockchain = require('.');
 const Block = require('./block');
+const Wallet = require('../wallet');
+const Transaction = require('../wallet/transaction');
 
 describe('BlockChain',()=>{
     let blockchain,newChain,originalChain ;
@@ -138,8 +140,99 @@ describe('BlockChain',()=>{
                         expect(logMock).toHaveBeenCalled(); 
                  });
                 });
+
+                describe('validateTransaction flag is true',()=>{
+                        it('calls the valid transaction data',()=>{
+
+                            const validateTransactionDataMock = jest.fn();
+                            blockchain.validTransactionData = validateTransactionDataMock;
+                            newChain.addBlock({data:'foo'});
+                            blockchain.replaceChain(newChain.chain,true);
+                            expect(validateTransactionDataMock).toHaveBeenCalled();
+
+                        });
+                        
+                });
             });
     });
 
+    describe('validTransactionData()',()=>{
+        let trasaction,rewardTransaction,wallet;
+
+        beforeEach(()=>{
+            wallet = new Wallet();
+            trasaction = wallet.createTransaction({
+                recipient :'foo',
+                amount : 50
+            });
+            rewardTransaction = Transaction.rewardTransaction({minerWallet:wallet});
+
+        });
+
+        describe('and the transaction data is valid',()=>{
+                it('returns true()',()=>{
+                    newChain.addBlock({data:[trasaction,rewardTransaction]});
+                    expect(blockchain.validTransactionData({chain:newChain.chain})).toBe(true);
+                });
+
+        });
+
+        describe('and the transaction data has multiple rewards',()=>{
+
+            it('return false',()=>{
+                newChain.addBlock({data:[trasaction,rewardTransaction,rewardTransaction]});
+                expect(blockchain.validTransactionData({chain:newChain.chain})).toBe(false);
+            });
+        });
+
+        describe('and the transaction data has one malformed output map',()=>{
+
+            describe('the trnasaction is not a reward transaction',()=>{
+                it('return false',()=>{
+                    trasaction.outputMap[wallet.puublicKey] = 9999;
+                    newChain.addBlock({data: [trasaction,rewardTransaction]});
+                    expect(blockchain.validTransactionData({chain:newChain.chain})).toBe(false);
+                });
+
+            });
+            describe('the trnasction is a reward transaction',()=>{
+                it('return false',()=>{
+                    rewardTransaction.outputMap[wallet.publicKey] = 99999;
+                    newChain.addBlock({data:[trasaction,rewardTransaction]});
+                    expect(blockchain.validTransactionData({chain:newChain.chain})).toBe(false);
+                });
+
+            });
+        });
+
+        describe('and the transaction data has one malformed input',()=>{
+            it('returns false',()=>{
+                wallet.balance = 9000;
+                const evilOutputMap = {
+                    [wallet.publicKey]:8900,
+                    fooRecipient : 100
+                };
+                const evilTransaction = {
+                    input :{
+                        timestamp : Date.now(),
+                        amount :wallet.balance,
+                        address : wallet.publicKey,
+                      singnature : wallet.sign(evilOutputMap)
+                    },
+                    outputMap :evilOutputMap
+                }
+                newChain.addBlock({data:[evilTransaction,rewardTransaction]});
+             //   expect(blockchain.validTransactionData({chain:newChain.chain})).toBe(false);
+
+            });
+        });
+        describe('and the block contains multiple identical transaction',()=>{
+            it('returns false',()=>{
+                newChain.addBlock({data:[trasaction,trasaction,trasaction,rewardTransaction]});
+                expect(blockchain.validTransactionData({chain:newChain.chain})).toBe(false);
+
+            });
+        });
+    });
 
 });
