@@ -11,12 +11,14 @@ class TransactionMiner{
 
         //get the tx pool's valid transaction
         const validTransaction = this.transactionPool.validTransaction();
-
+        
         //generate the miner's reward
         validTransaction.push(Transction.rewardTransaction({minerWallet:this.wallet}));
         
         //add a block consisting these tx to the blockchain
         this.blockchain.addBlock({data:validTransaction});
+        console.log(this.blockchain);
+
         //broadcast updated blockchain
         this.pubsub.broadcastChain();
 

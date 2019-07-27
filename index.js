@@ -10,6 +10,7 @@ const app = new express();
 const blockchain = new BlockChain();
 const transactionPool = new TransactionPool();
 const pubsub = new PubSub({blockchain, transactionPool});
+const path = require('path');
 
 const wallet = new Wallet();
 const transactionMiner = new TransactionMiner({blockchain,transactionPool,wallet,pubsub});
@@ -19,6 +20,7 @@ const ROOT_NODE_ADDRESS = `http://localhost:${DEFAULT_PORT}`;
 
 
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname,'client/dist')));
 app.get('/api/blocks',(req,res)=>{
     res.json(blockchain.chain);
 });
@@ -65,6 +67,49 @@ app.get('/api/wallet-info',(req,res)=>{
         balance : Wallet.calculateBalance({chain:blockchain.chain,address})
     });
 });
+
+
+app.get('*',(req,res)=>{
+    res.sendFile(path.join(__dirname,'client/dist/index.html'));
+});
+
+
+const walletFoo = new Wallet();
+const walletbar = new Wallet();
+
+const generateWalletTransaction = ({wallet,recipient,amount})=>{
+    const transaction = wallet.createTransaction({
+        recipient,amount,chain:blockchain.chain
+    });
+    transactionPool.setTransaction(transaction);
+};
+
+const walletAction= ()=>generateWalletTransaction({
+    wallet,recipient:walletFoo.publicKey,amount:5
+}); 
+
+const walletFooAction= ()=>generateWalletTransaction({
+    wallet : walletFoo,recipient:walletbar.publicKey,amount:10
+}); 
+
+const walletbarAction= ()=>generateWalletTransaction({
+    wallet:walletbar,recipient:wallet.publicKey,amount:15
+}); 
+for(let i=0;i<10;i++){
+    if(i%3==0){
+        walletAction();
+        walletFooAction();
+    }else if(i%3==1){
+        walletAction();
+        walletbarAction();
+    }else{
+        walletFooAction();
+        walletbarAction();
+    }
+    transactionMiner.mineTransaction();
+
+}
+
 let PEER_PORT;
 
 if(process.env.GENERATE_PEER_PORT === 'true'){
